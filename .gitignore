@@ -1,0 +1,7 @@
+# Ne jamais envoyer de CV ou de sauvegardes sur GitHub
+sauvegarde-cv-*.json
+*.pdf
+*.docx
+*.doc
+cv/
+CV/

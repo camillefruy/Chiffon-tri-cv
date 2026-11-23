@@ -1,0 +1,739 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tri de CV CHIFFON</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Marcellus&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* VOICE: atelier RH calme et précis, comme un registre bien tenu
+   IDEA: une étiquette de tissu cousue sur chaque candidature (score + verdict)
+   PICTURE: la matrice candidats × postes, cases colorées par verdict
+   COLOUR and TYPE: couleurs du logo CHIFFON (encre marine, terracotta, ocre) ; Marcellus + Inter
+   LAYOUT: bandeau logo, onglets, matrice puis fiches candidats dépliables */
+:root{color-scheme:light dark;
+--bg:light-dark(#f6f1e8,#11182a);--paper:light-dark(#fffdf9,#192238);--ink:light-dark(#1c2a4a,#f1ebe0);--muted:light-dark(#5d6680,#a9b0c2);
+--line:light-dark(#e3dacb,#2c3652);--terra:light-dark(#b84a30,#e07a5f);--ochre:light-dark(#a87412,#e3b04b);
+--ok:light-dark(#2f6b4f,#6fc39a);--okbg:light-dark(#e3f0e8,#1d3a2e);--mid:light-dark(#9a6a10,#e3b04b);--midbg:light-dark(#f8ecd2,#3a3018);
+--no:light-dark(#6b7080,#9aa1b3);--nobg:light-dark(#ecebe7,#262e44);--kobg:light-dark(#f7e2dc,#3d2420)}
+:root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
+*{box-sizing:border-box;min-width:0}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 Inter,system-ui,sans-serif;overflow-x:clip}
+h1,h2,h3{font-family:Marcellus,Georgia,serif;font-weight:400;line-height:1.1;margin:0}
+h1{font-size:clamp(30px,4vw,44px);text-wrap:balance}h2{font-size:26px}h3{font-size:19px;font-family:Inter,sans-serif;font-weight:600}
+.wrap{max-width:1240px;margin:0 auto;padding:0 max(4vw,16px)}
+header{background:var(--paper);border-bottom:1px solid var(--line)}
+.top{display:flex;gap:24px;align-items:center;padding-block:22px;flex-wrap:wrap}
+.logo{width:150px;border-radius:10px;flex:none}
+.top p{margin:6px 0 0;color:var(--muted);max-width:62ch}
+nav{display:flex;gap:4px;flex-wrap:wrap;overflow-x:auto}
+nav button{border:0;background:none;color:var(--muted);font:600 15px Inter,sans-serif;padding:12px 14px;min-height:44px;border-bottom:3px solid transparent;cursor:pointer}
+nav button[aria-selected=true]{color:var(--ink);border-color:var(--terra)}
+main{padding-block:28px 60px}
+.view{display:none}.view.on{display:block}
+.card{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:20px}
+.muted{color:var(--muted)}.small{font-size:14px}
+button.b,label.b{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--ink);background:var(--ink);color:var(--paper);font:600 15px Inter,sans-serif;padding:10px 16px;min-height:44px;border-radius:10px;cursor:pointer}
+button.ghost,label.ghost{background:transparent;color:var(--ink)}
+button.danger{background:transparent;color:var(--terra);border-color:var(--terra)}
+button:focus-visible,select:focus-visible,input:focus-visible,textarea:focus-visible,summary:focus-visible{outline:3px solid var(--ochre);outline-offset:2px}
+input,select,textarea{font:16px Inter,sans-serif;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:9px;padding:10px 12px;min-height:44px;width:100%}
+textarea{min-height:180px;resize:vertical;line-height:1.5}
+label.f{display:block;font-weight:600;font-size:14px;margin:14px 0 6px}
+.row{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,280px),1fr));gap:16px}
+/* matrice */
+.mx{width:100%;border-collapse:separate;border-spacing:4px;font-size:15px}
+.mx th{font:600 13px Inter,sans-serif;color:var(--muted);text-align:left;padding:4px 6px;vertical-align:bottom}
+.mx td.n{padding:6px 8px;font-weight:500}
+.cell{display:block;width:100%;border:0;border-radius:8px;padding:9px 6px;font:700 15px Inter,sans-serif;text-align:center;cursor:pointer;min-height:40px;white-space:nowrap}
+.s-conseille{background:var(--okbg);color:var(--ok)}.s-approfondir{background:var(--midbg);color:var(--mid)}.s-non{background:var(--nobg);color:var(--no)}
+.cell.el{text-decoration:line-through;text-decoration-thickness:1px}
+.legend{display:flex;gap:16px;flex-wrap:wrap;font-size:14px;color:var(--muted);margin:12px 0 0}
+.legend i{display:inline-block;width:14px;height:14px;border-radius:4px;vertical-align:-2px;margin-right:6px}
+/* fiches candidats */
+.toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:18px 0}
+.toolbar select,.toolbar input{width:auto;flex:1 1 200px}
+.chip{display:inline-block;border:1px solid var(--line);border-radius:999px;padding:3px 10px;font-size:13px;margin:3px 4px 3px 0;white-space:nowrap}
+.chip.on{background:var(--okbg);border-color:transparent;color:var(--ok);font-weight:600}
+.chip.off{color:var(--muted);text-decoration:line-through;text-decoration-color:var(--line)}
+.cand{margin-bottom:12px;padding:0;overflow:hidden}
+.cand>summary{list-style:none;cursor:pointer;padding:16px 20px;display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:14px;align-items:center}
+.cand>summary::-webkit-details-marker{display:none}
+.rank{font:20px Marcellus,serif;color:var(--muted);width:2ch;text-align:right}
+.tag{border-radius:10px;padding:8px 12px;text-align:center;min-width:150px}
+.tag b{display:block;font-size:24px;line-height:1}.tag span{font-size:13px;font-weight:600;white-space:nowrap}
+.bar{height:6px;background:var(--nobg);border-radius:4px;margin-top:8px;overflow:hidden}.bar i{display:block;height:100%;border-radius:4px}
+.body{padding:4px 20px 20px;border-top:1px solid var(--line)}
+.body h4{font:600 14px Inter,sans-serif;margin:18px 0 8px}
+.crit{list-style:none;padding:0;margin:0}
+.crit li{display:flex;gap:10px;padding:7px 0;border-bottom:1px dashed var(--line);font-size:15px}
+.ic{flex:none;width:24px;height:24px;border-radius:50%;display:grid;place-items:center;font-weight:700;font-size:13px}
+.ic.ok{background:var(--okbg);color:var(--ok)}.ic.ko{background:var(--kobg);color:var(--terra)}.ic.averifier{background:var(--midbg);color:var(--mid)}
+.vig{background:var(--midbg);border-radius:10px;padding:10px 14px;font-size:15px;margin-top:6px}
+ol.q{padding-left:22px;margin:0}ol.q li{margin:6px 0}
+.cvtext{white-space:pre-wrap;background:var(--bg);border-radius:10px;padding:14px;font-size:15px;max-height:320px;overflow:auto}
+mark{background:light-dark(#f6dfa0,#5a4612);color:inherit;border-radius:3px;padding:0 2px}
+.elimtag{display:inline-block;background:var(--kobg);color:var(--terra);font-size:12px;font-weight:700;border-radius:6px;padding:2px 8px;margin-left:8px}
+.calc{font-size:13px;color:var(--muted);margin-top:6px}
+.notice{background:var(--okbg);color:var(--ok);border-radius:10px;padding:10px 14px;margin-bottom:16px;font-size:15px}
+.notice.warn{background:var(--kobg);color:var(--terra)}
+.posteform{margin-bottom:18px}.posteform summary{cursor:pointer;font-weight:600;padding:6px 0;min-height:36px}
+.opt{border-left:4px solid var(--line);padding:4px 0 4px 16px;margin:14px 0}.opt.best{border-color:var(--ok)}
+.opt b{display:block}
+footer{border-top:1px solid var(--line);padding:20px 0;color:var(--muted);font-size:14px}
+@media(max-width:600px){.cand>summary{grid-template-columns:minmax(0,1fr) auto}.rank{display:none}.tag{min-width:0}.mx{font-size:13px}.cell{font-size:13px;padding:8px 2px}.logo{width:110px}}
+@media(prefers-reduced-motion:no-preference){.bar i{transition:width .5s ease}}
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap top">
+    <img class="logo" alt="Logo CHIFFON" src="data:image/jpeg;base64,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">
+    <div>
+      <h1>Tri de CV du service RH</h1>
+      <p>Chaque CV est comparé aux fiches de poste : critères éliminatoires, mots-clés, score et questions d’entretien. L’outil propose, l’équipe RH décide.</p>
+    </div>
+  </div>
+  <div class="wrap"><nav role="tablist" id="tabs">
+    <button role="tab" data-v="classement" aria-selected="true">Classement</button>
+    <button role="tab" data-v="ajout" aria-selected="false">Ajouter des CV</button>
+    <button role="tab" data-v="postes" aria-selected="false">Postes &amp; critères</button>
+    <button role="tab" data-v="conservation" aria-selected="false">Conservation (1 an)</button>
+  </nav></div>
+</header>
+
+<main class="wrap">
+  <div id="msg"></div>
+
+  <section class="view on" id="v-classement">
+    <div class="card">
+      <h2>Vue d’ensemble</h2>
+      <p class="muted small" style="margin:6px 0 12px">Score de compatibilité de chaque candidature avec chaque poste. Cliquez sur une case pour ouvrir le détail. Une case barrée = au moins un critère éliminatoire non rempli.</p>
+      <div class="scroll"><table class="mx" id="matrix"></table></div>
+      <div class="legend"><span><i class="s-conseille"></i>Entretien conseillé (≥ 65 %)</span><span><i class="s-approfondir"></i>À approfondir (45–64 %)</span><span><i class="s-non"></i>Non prioritaire (&lt; 45 % ou éliminé)</span></div>
+    </div>
+    <div class="toolbar">
+      <select id="selPoste" aria-label="Poste"></select>
+      <select id="selFiltre" aria-label="Filtre">
+        <option value="">Tous les verdicts</option><option value="conseille">Entretien conseillé</option><option value="approfondir">À approfondir</option><option value="non">Non prioritaire</option>
+      </select>
+      <input id="q" type="search" placeholder="Rechercher un CV…" aria-label="Rechercher">
+    </div>
+    <p id="pourquoi" class="muted" style="margin:-4px 0 16px"></p>
+    <div id="liste"></div>
+  </section>
+
+  <section class="view" id="v-ajout">
+    <div class="grid2">
+      <form class="card" id="formCV">
+        <h2>Nouvelle candidature</h2>
+        <label class="f" for="cvTitre">Intitulé (poste visé ou référence du dossier)</label>
+        <input id="cvTitre" required placeholder="Ex. Chargé(e) de recrutement – réf. 2026-014">
+        <label class="f" for="cvDate">Date de réception</label>
+        <input id="cvDate" type="date" required>
+        <label class="f" for="cvTexte">Texte du CV</label>
+        <textarea id="cvTexte" required placeholder="Collez ici le texte du CV, ou importez un fichier ci-dessous."></textarea>
+        <div class="row" style="margin-top:10px">
+          <label class="b ghost" for="cvFile">Importer .pdf, .docx ou .txt</label>
+          <input id="cvFile" type="file" accept=".pdf,.docx,.txt" multiple hidden>
+          <span id="fileInfo" class="muted small"></span>
+        </div>
+        <label class="row small" style="margin:16px 0;gap:10px;flex-wrap:nowrap"><input type="checkbox" id="cvInfo" required style="width:22px;min-height:22px;flex:none"> Le candidat a été informé que son CV est conservé 1 an puis supprimé.</label>
+        <button class="b" type="submit">Analyser et ajouter</button>
+        <p class="muted small">Les e-mails et numéros de téléphone sont masqués automatiquement. N’ajoutez ni photo, ni âge, ni adresse : ils ne servent pas au tri.</p>
+      </form>
+      <div class="card">
+        <h2>Comment ça marche</h2>
+        <h4 style="font:600 15px Inter;margin:16px 0 4px">1. Critères éliminatoires</h4>
+        <p class="small" style="margin:0">Expérience minimum, compétence indispensable, niveau de diplôme. Si l’info manque, le critère passe en « à vérifier » : on n’élimine jamais sur une absence d’information.</p>
+        <h4 style="font:600 15px Inter;margin:16px 0 4px">2. Score sur 100</h4>
+        <p class="small" style="margin:0">60 pts mots-clés du poste (pondérés 1 à 3, avec synonymes) + 25 pts expérience + 15 pts diplôme − 5 pts par point de vigilance.</p>
+        <h4 style="font:600 15px Inter;margin:16px 0 4px">3. Verdict</h4>
+        <p class="small" style="margin:0"><b>Entretien conseillé</b> ≥ 65 % sans critère à vérifier · <b>À approfondir</b> 45–64 % · <b>Non prioritaire</b> &lt; 45 % ou critère éliminatoire non rempli.</p>
+        <h4 style="font:600 15px Inter;margin:16px 0 4px">4. Décision humaine</h4>
+        <p class="small" style="margin:0">Le verdict est une aide. Chaque fiche a un champ « Décision RH » : c’est la personne qui décide (RGPD, art. 22).</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="view" id="v-postes">
+    <div class="row" style="justify-content:space-between;margin-bottom:16px">
+      <h2>Fiches de poste et critères</h2>
+      <div class="row"><button class="b ghost" id="addPoste" type="button">+ Ajouter un poste</button><button class="b danger" id="resetPostes" type="button">Revenir aux fiches d’origine</button></div>
+    </div>
+    <p class="muted" style="margin-top:0">Format des mots-clés : une ligne par compétence → <code>Libellé | poids (1 à 3) | synonyme 1, synonyme 2</code>.</p>
+    <div id="postesForms"></div>
+  </section>
+
+  <section class="view" id="v-conservation">
+    <div class="grid2">
+      <div class="card">
+        <h2>Conservation des CV</h2>
+        <p id="consStat"></p>
+        <p class="small muted">Règle appliquée : chaque CV est supprimé automatiquement <b>365 jours après sa date de réception</b>, à chaque ouverture de l’outil. Les CV sont stockés uniquement dans ce navigateur : rien n’est envoyé sur GitHub ni sur un serveur.</p>
+        <h4 style="font:600 15px Inter;margin:18px 0 6px">Sauvegarde chiffrée</h4>
+        <p class="small" style="margin:0 0 8px">Pour changer d’ordinateur ou partager avec l’équipe : exportez avec un mot de passe (chiffrement AES-256). La date de suppression suit les CV.</p>
+        <input id="pwd" type="password" placeholder="Mot de passe de la sauvegarde (12 caractères minimum conseillés)" autocomplete="new-password">
+        <div class="row" style="margin-top:10px">
+          <button class="b" id="exp" type="button">Télécharger la sauvegarde</button>
+          <button class="b ghost" id="expCopy" type="button">Copier la sauvegarde</button>
+          <label class="b ghost" for="impFile">Importer une sauvegarde</label><input id="impFile" type="file" accept=".json,.txt" hidden>
+        </div>
+        <textarea id="impText" style="min-height:90px;margin-top:10px" placeholder="…ou collez une sauvegarde ici puis cliquez sur Importer le texte"></textarea>
+        <div class="row" style="margin-top:10px"><button class="b ghost" id="impBtn" type="button">Importer le texte</button>
+        <button class="b danger" id="wipe" type="button">Supprimer tous les CV</button></div>
+      </div>
+      <div class="card">
+        <h2>Options pour garder les CV 1 an</h2>
+        <div class="opt best"><b>1. Navigateur + sauvegarde chiffrée (actif ici)</b><span class="small">Gratuit, aucune donnée sur GitHub. Limite : lié à un poste ; si le cache est vidé, il faut réimporter la sauvegarde.</span></div>
+        <div class="opt best"><b>2. Stockage cloud européen avec suppression auto à 365 j (conseillé pour l’équipe)</b><span class="small">Scaleway ou OVHcloud Object Storage (France) : une « règle de cycle de vie » efface chaque fichier 365 jours après son dépôt. Quelques euros par mois.</span></div>
+        <div class="opt"><b>3. Base de données UE (ex. Supabase région Francfort/Paris)</b><span class="small">Connexion par compte pour les 4 RRH, purge quotidienne programmée des CV de plus d’un an, journal des accès.</span></div>
+        <div class="opt"><b>4. Logiciel de recrutement (ATS) ou SIRH</b><span class="small">À terme, si CHIFFON choisit un SIRH : la purge à 1 an se paramètre dans l’outil, et ce tri sert de grille.</span></div>
+        <div class="opt" style="border-color:var(--terra)"><b>À éviter : mettre les CV dans le dépôt GitHub</b><span class="small">Git garde tout l’historique : un CV « supprimé » reste récupérable, et un dépôt public les rend visibles par tous.</span></div>
+      </div>
+    </div>
+  </section>
+</main>
+<footer><div class="wrap">Outil d’aide au tri — CHIFFON, service RH. Exemples : les 15 candidatures de l’annexe 2 (reçues le 16/11/2026). Les scores sont des repères, pas des décisions.</div></footer>
+
+<script>
+/* ===== Moteur de tri CHIFFON — fonctions pures (testables) ===== */
+const CONSERVATION_JOURS = 365; // durée de conservation des CV (1 an)
+
+const SEUILS = { conseille: 65, approfondir: 45 }; // % de compatibilité
+
+/* --- Fiches de poste par défaut (modifiables dans l'onglet « Postes & critères ») --- */
+const POSTES_DEFAUT = [
+  {
+    id: 'sirh', titre: 'Chargé(e) SIRH & digitalisation RH',
+    pourquoi: "Paie et administration sur papier, navettes courrier, aucun indicateur RH suivi : la digitalisation est le levier n°1.",
+    expMin: 3, expCible: 6, niveauMin: 5,
+    obligatoire: { label: 'Expérience d’un outil ou projet SIRH / digitalisation', termes: ['sirh', 'digitalisation', 'dematerialisation', 'automatisation', 'workday', 'successfactors', 'talentsoft', 'sap', 'adp', 'logiciel'] },
+    motsCles: [
+      { k: 'SIRH', w: 3, s: ['sirh'] },
+      { k: 'Digitalisation / dématérialisation', w: 3, s: ['digitalisation', 'dematerialisation', 'digital'] },
+      { k: 'Automatisation des process', w: 3, s: ['automatisation', 'automatiser'] },
+      { k: 'Gestion de projet', w: 2, s: ['gestion de projet', 'conduit', 'pilotage', 'projets'] },
+      { k: 'Cahier des charges / recette', w: 2, s: ['cahier des charges', 'cahiers des charges', 'recette'] },
+      { k: 'Formation des utilisateurs', w: 2, s: ['formation des utilisateurs', 'accompagnement au changement', 'conduite du changement'] },
+      { k: 'Logiciels RH', w: 2, s: ['workday', 'successfactors', 'talentsoft', 'sap', 'adp', 'sage', 'silae', 'ats'] },
+      { k: 'Indicateurs / reporting', w: 2, s: ['reporting', 'kpi', 'indicateurs', 'tableau de bord'] },
+      { k: 'Veille technologique', w: 1, s: ['veille technologique', 'veille'] },
+      { k: 'Taille d’entreprise comparable', w: 1, s: ['1000 collaborateurs', 'pme', 'eti', 'industriel'] }
+    ],
+    questions: [
+      "Racontez un projet de digitalisation RH que vous avez mené de A à Z : point de départ, outil choisi, résultat mesuré.",
+      "Chez CHIFFON, la paie et les dossiers du personnel sont encore sur papier. Par quoi commenceriez-vous les 3 premiers mois ?"
+    ]
+  },
+  {
+    id: 'recrut', titre: 'Chargé(e) de recrutement & onboarding',
+    pourquoi: "110 000 € de recrutement en 2024, surtout via des cabinets externes, et aucun onboarding : internaliser fait baisser les coûts et le turnover.",
+    expMin: 1, expCible: 3, niveauMin: 5,
+    obligatoire: { label: 'Expérience concrète du recrutement', termes: ['recrutement', 'sourcing', 'entretien', 'chasse', 'preselection', 'prequalification'] },
+    motsCles: [
+      { k: 'Sourcing', w: 3, s: ['sourcing', 'chasse', 'cvtheque', 'linkedin'] },
+      { k: 'Conduite d’entretiens', w: 3, s: ['entretien', 'entretiens', 'prequalification'] },
+      { k: 'Onboarding / intégration', w: 3, s: ['onboarding', 'integration', 'accueil des nouveaux'] },
+      { k: 'Marque employeur', w: 2, s: ['marque employeur'] },
+      { k: 'Fiches de poste', w: 2, s: ['fiche de poste', 'fiches de poste'] },
+      { k: 'Reporting / KPI recrutement', w: 2, s: ['reporting', 'kpi'] },
+      { k: 'Outil ATS', w: 1, s: ['ats', 'smartrecruiters', 'lever', 'cvtheques'] },
+      { k: 'Profils techniques / industriels', w: 1, s: ['profils techniques', 'industriel', 'penuriques', 'techniques'] },
+      { k: 'Organisation des campagnes', w: 1, s: ['organisation des entretiens', 'campagnes de recrutement', 'campagne'] }
+    ],
+    questions: [
+      "Comment construiriez-vous un process de recrutement interne pour remplacer une partie des cabinets externes ? Quels indicateurs suivriez-vous ?",
+      "Décrivez le parcours d’intégration idéal d’un opérateur de fabrication pendant ses 30 premiers jours."
+    ]
+  },
+  {
+    id: 'qvct', titre: 'Chargé(e) QVCT & prévention',
+    pourquoi: "Les obligations QVCT ne sont pas respectées et 95 000 € d’avantages sont dépensés sans impact mesuré ; l’absentéisme et le turnover coûtent cher.",
+    expMin: 2, expCible: 4, niveauMin: 5,
+    obligatoire: { label: 'Expérience en QVCT, prévention ou RPS', termes: ['qvct', 'qualite de vie', 'rps', 'risques psychosociaux', 'prevention', 'bien-etre', 'sante au travail'] },
+    motsCles: [
+      { k: 'QVCT', w: 3, s: ['qvct', 'qualite de vie'] },
+      { k: 'Risques psychosociaux', w: 3, s: ['rps', 'risques psychosociaux'] },
+      { k: 'Prévention', w: 3, s: ['prevention', 'duerp'] },
+      { k: 'Enquêtes / baromètre', w: 2, s: ['enquete', 'enquetes', 'barometre'] },
+      { k: 'Médiation / conflits', w: 2, s: ['mediation', 'conflits', 'gestion de conflits'] },
+      { k: 'Dialogue social / CSE', w: 2, s: ['dialogue social', 'cse', 'irp'] },
+      { k: 'Ateliers / sensibilisation', w: 1, s: ['ateliers', 'sensibilisation', 'animation'] },
+      { k: 'Inclusion / handicap / RSE', w: 1, s: ['handicap', 'inclusion', 'rse'] },
+      { k: 'Organisation du travail / télétravail', w: 1, s: ['teletravail', 'organisation du travail'] }
+    ],
+    questions: [
+      "Quelles sont les 3 obligations QVCT / prévention qu’une entreprise industrielle de 450 salariés doit absolument respecter ?",
+      "Comment prouveriez-vous à la direction qu’une action QVCT a fait baisser l’absentéisme ?"
+    ]
+  },
+  {
+    id: 'paie', titre: 'Gestionnaire paie & administration du personnel',
+    pourquoi: "Paie traitée avec des supports papier, convention collective du textile : il faut fiabiliser et dématérialiser.",
+    expMin: 3, expCible: 5, niveauMin: 5,
+    obligatoire: { label: 'Expérience en paie', termes: ['paie', 'bulletins'] },
+    motsCles: [
+      { k: 'Paie', w: 3, s: ['paie', 'bulletins de paie'] },
+      { k: 'DSN / déclarations sociales', w: 3, s: ['dsn', 'declarations sociales', 'charges sociales'] },
+      { k: 'Administration du personnel', w: 2, s: ['administration du personnel', 'contrats', 'avenants', 'dossiers du personnel', 'suivi administratif'] },
+      { k: 'Multi-conventions / convention collective', w: 2, s: ['multi-conventions', 'convention collective', 'conventions'] },
+      { k: 'Droit du travail', w: 2, s: ['droit du travail'] },
+      { k: 'Logiciel de paie', w: 2, s: ['sage', 'adp', 'sap', 'silae'] },
+      { k: 'Absences / congés', w: 1, s: ['absences', 'conges'] },
+      { k: 'Veille réglementaire', w: 1, s: ['veille reglementaire', 'veille'] },
+      { k: 'Dématérialisation', w: 1, s: ['dematerialisation', 'digitalisation'] }
+    ],
+    questions: [
+      "Quelles particularités de la convention collective du textile connaissez-vous (primes, classifications, temps de travail) ?",
+      "Comment passeriez-vous d’une paie avec dossiers papier à une paie dématérialisée sans erreur sur les bulletins ?"
+    ]
+  }
+];
+
+/* --- Points de vigilance (jamais éliminatoires : à vérifier par un humain) --- */
+const VIGILANCES = [
+  { p: ['en cours d’obtention', "en cours d'obtention", 'en cours'], msg: 'Diplôme pas encore obtenu', q: 'Où en êtes-vous de votre diplôme en cours, et comment allez-vous concilier fin d’études et prise de poste ?' },
+  { p: ['intervenir en externe'], msg: 'Projet tourné vers le conseil externe', q: 'Votre projet est d’intervenir en externe : qu’est-ce qui vous donnerait envie de rester durablement en interne chez CHIFFON ?' },
+  { p: ["recherche d'une premiere experience"], msg: 'Pas encore d’expérience professionnelle', q: 'Quelles situations concrètes (stage, alternance, projet) montrent que vous êtes opérationnel(le) ?' },
+  { p: ['vision theorique'], msg: 'Approche surtout théorique', q: 'Donnez un exemple où vous avez transformé une idée en action concrète et mesurable.' },
+  { p: ['management directif'], msg: 'Style de management directif', q: 'CHIFFON veut moderniser ses pratiques managériales. Comment adaptez-vous votre style à une équipe qui doit gagner en autonomie ?' },
+  { p: ['changement permanent', 'prochain defi'], msg: 'Risque de départ rapide (besoin de nouveauté)', q: 'Qu’est-ce qui vous ferait rester au moins 3 ans dans une entreprise ?' }
+];
+
+const QUESTION_CHIFFON = "CHIFFON fabrique en France, en circuit court, avec des tissus recyclés. Qu’est-ce qui vous attire dans ce projet, et qu’y apporteriez-vous la première année ?";
+
+/* --- Outils texte --- */
+// normalise en gardant la même longueur (pour surligner dans le texte d'origine)
+function norm(s) {
+  let o = '';
+  for (const c of s) { const d = c.normalize('NFD')[0].toLowerCase(); o += (c.length === 2 ? d + ' ' : d); }
+  return o.replace(/[’`]/g, "'");
+}
+function esc(s) { return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
+function reTerme(t) {
+  const n = norm(t).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return new RegExp('(^|[^a-z0-9])(' + n + ')(?=[^a-z0-9]|$)', 'g');
+}
+function trouve(nt, terme) { reTerme(terme).lastIndex = 0; return reTerme(terme).test(nt); }
+function positions(nt, terme) {
+  const r = reTerme(terme), out = []; let m;
+  while ((m = r.exec(nt))) { const st = m.index + m[1].length; out.push([st, st + m[2].length]); if (r.lastIndex === m.index) r.lastIndex++; }
+  return out;
+}
+
+/* --- Expérience : on lit « X ans d'expérience », « depuis X ans », « X mois »… --- */
+function experience(nt) {
+  const vus = [];
+  const re = /(?:(plus de|depuis)\s*)?(\d{1,2})\s*(ans|annees|mois)\b/g; let m;
+  while ((m = re.exec(nt))) {
+    const avant = nt.slice(Math.max(0, m.index - 60), m.index);
+    if (/(master|licence|bachelor|titulaire|diplome|doctorat|bts|obtenu)[^.,;(]*$/.test(avant)) continue; // date de diplôme, pas d'expérience
+    vus.push(m[3] === 'mois' ? +m[2] / 12 : +m[2]);
+  }
+  if (vus.length) return { ans: Math.max(...vus), source: 'detecte' };
+  if (/recherche d'une premiere experience|debutant|jeune diplome/.test(nt)) return { ans: 0, source: 'debutant' };
+  return { ans: null, source: 'absent' };
+}
+
+/* --- Diplôme : niveau 5 (bac+2) à 8 (doctorat) --- */
+function diplome(nt, raw = '') {
+  const regles = [
+    [8, /doctorat|phd/g, 'Doctorat'], [7, /master|rncp ?7|bac ?\+ ?5|mba/g, 'Master / Bac+5'],
+    [6, /licence|bachelor|rncp ?6|bac ?\+ ?3|diplome universitaire/g, 'Licence / Bachelor'], [5, /(^|[^a-z])(bts|dut|but)([^a-z]|$)|bac ?\+ ?2/g, 'BTS / DUT']
+  ];
+  let obtenu = null, enCours = null;
+  for (const [niv, re, lib] of regles) {
+    let m; re.lastIndex = 0;
+    while ((m = re.exec(nt))) {
+      const ctx = nt.slice(m.index, m.index + 70);
+      const cours = /en cours/.test(ctx.split(/[.\n]/)[0]);
+      if (cours) { if (!enCours || niv > enCours.niv) enCours = { niv, lib }; }
+      else if (!obtenu || niv > obtenu.niv) obtenu = { niv, lib };
+    }
+  }
+  if (!obtenu && /(^|[^A-Za-z])DU([^A-Za-z]|$)/.test(raw)) obtenu = { niv: 6, lib: 'Diplôme universitaire (DU)' };
+  return { obtenu, enCours };
+}
+
+/* --- Analyse d'un CV pour un poste --- */
+function analyser(cv, poste) {
+  const nt = norm(cv.titre + '\n' + cv.texte);
+  const exp = experience(nt), dip = diplome(nt, cv.titre + '\n' + cv.texte);
+  const elim = [];
+
+  // 1. Critères éliminatoires
+  let st;
+  if (exp.ans === null) st = 'averifier'; else st = exp.ans >= poste.expMin ? 'ok' : 'ko';
+  elim.push({ label: `Au moins ${poste.expMin} an${poste.expMin > 1 ? 's' : ''} d’expérience`, statut: st,
+    detail: exp.ans === null ? 'Durée non trouvée dans le CV' : exp.source === 'debutant' ? 'Profil débutant' : `≈ ${fmtAns(exp.ans)} détecté${exp.ans >= 2 ? 's' : ''}` });
+
+  const tObl = poste.obligatoire.termes.filter(t => trouve(nt, t));
+  elim.push({ label: poste.obligatoire.label, statut: tObl.length ? 'ok' : 'ko', detail: tObl.length ? 'Trouvé : ' + tObl.slice(0, 3).join(', ') : 'Aucun mot-clé trouvé' });
+
+  if (dip.obtenu) st = dip.obtenu.niv >= poste.niveauMin ? 'ok' : 'ko';
+  else st = 'averifier';
+  elim.push({ label: `Diplôme niveau ${poste.niveauMin} (bac+${poste.niveauMin - 3}) minimum`, statut: st,
+    detail: dip.obtenu ? dip.obtenu.lib : dip.enCours ? dip.enCours.lib + ' en cours' : 'Niveau non précisé' });
+
+  const elimine = elim.some(e => e.statut === 'ko');
+
+  // 2. Mots-clés
+  const total = poste.motsCles.reduce((a, k) => a + k.w, 0);
+  const trouves = [], manquants = [], surl = [];
+  let pts = 0;
+  for (const k of poste.motsCles) {
+    const hits = k.s.filter(t => trouve(nt, t));
+    if (hits.length) { pts += k.w; trouves.push(k); hits.forEach(h => surl.push(...positions(nt, h))); }
+    else manquants.push(k);
+  }
+  const sKw = Math.min(1, pts / (total * 0.55)) * 60;
+  const sExp = exp.ans === null ? 8 : Math.min(1, exp.ans / poste.expCible) * 25;
+  const sDip = dip.obtenu && dip.obtenu.niv >= poste.niveauMin ? 15 : (dip.enCours || !dip.obtenu ? 8 : 0);
+
+  // 3. Vigilance
+  const vig = VIGILANCES.filter(v => v.p.some(p => nt.includes(norm(p))));
+  let score = Math.round(Math.max(0, Math.min(100, sKw + sExp + sDip - 5 * vig.length)));
+
+  let statut = score >= SEUILS.conseille ? 'conseille' : score >= SEUILS.approfondir ? 'approfondir' : 'non';
+  if (elimine) statut = 'non';
+  if (!elimine && statut === 'conseille' && (elim.some(e => e.statut === 'averifier') || vig.length >= 2)) statut = 'approfondir';
+
+  // 4. Questions d'entretien
+  const qs = [...poste.questions];
+  elim.filter(e => e.statut === 'averifier').forEach(e => qs.push(`À vérifier — ${e.label.toLowerCase()} : pouvez-vous préciser ce point (durée, dates, intitulé exact) ?`));
+  manquants.filter(k => k.w >= 2).slice(0, 2).forEach(k => qs.push(`Votre CV ne mentionne pas « ${k.k} ». Avez-vous une expérience sur ce sujet ? Donnez un exemple.`));
+  vig.forEach(v => qs.push(v.q));
+  qs.push(QUESTION_CHIFFON);
+
+  return { score, statut, elimine, elim, trouves, manquants, vig, questions: qs, surl, detail: { kw: Math.round(sKw), exp: Math.round(sExp), dip: sDip, malus: 5 * vig.length } };
+}
+function fmtAns(a) { return a < 1 ? Math.round(a * 12) + ' mois' : (Math.round(a * 10) / 10).toString().replace('.', ',') + ' an' + (a >= 2 ? 's' : ''); }
+
+/* --- Conservation : purge des CV de plus d'un an --- */
+function expiration(cv) { const d = new Date(cv.recu); d.setDate(d.getDate() + CONSERVATION_JOURS); return d; }
+function purger(cvs, maintenant = new Date()) {
+  const gardes = cvs.filter(c => expiration(c) > maintenant);
+  return { gardes, supprimes: cvs.length - gardes.length };
+}
+// masque e-mails et téléphones (minimisation des données)
+function masquer(t) {
+  return t.replace(/[\w.+-]+@[\w-]+\.[\w.]+/g, '[e-mail masqué]').replace(/(\+33|0)[1-9]([ .-]?\d{2}){4}/g, '[tél. masqué]');
+}
+
+/* ===== Candidatures de l'annexe 2 (exemples, reçues le 16/11/2026) ===== */
+const CV_EXEMPLES = [
+['Chargé(e) de Recrutement – Junior', `Titulaire d’un master en psychologie du travail depuis 2 ans, je débute ma carrière dans le recrutement avec une première expérience (18 mois) en sourcing et entretiens téléphoniques au sein d’une agence d’intérim. Je suis motivé(e) à développer mes compétences dans le recrutement de profils techniques.
+Compétences clés : Sourcing (LinkedIn, CVthèques) ; Préqualification téléphonique ; Organisation des entretiens ; Reporting recrutement ; Bonne communication.
+Aisance relationnelle, trilingue anglais et espagnol.`],
+['Gestionnaire de Paie – Confirmé(e)', `Professionnel(le) de la paie avec plus de 5 ans d'expérience dans des environnements multi-conventions. Maîtrise du logiciel SAGE et bonne connaissance du droit du travail.
+Bachelor paie et social obtenu en 2021.
+Compétences clés : Élaboration des bulletins de paie ; Déclarations sociales (DSN) ; Suivi des absences et congés ; Gestion des charges sociales ; Veille réglementaire.
+Rigoureux-se, sens du service client, expertise avancée. Interessé-e par le domaine du recrutement des équipes.`],
+['Responsable Ressources Humaines – PME', `RRH généraliste avec 10 ans d’expérience, j’accompagne les dirigeants de PME dans tous les volets RH : recrutement, formation, relations sociales, gestion des talents.
+Master en management des Ressources Humaines en cours.
+Compétences clés : Conseil aux managers ; Recrutement & onboarding ; Gestion de la formation ; Dialogue social / CSE ; Administration du personnel.
+Capacité à se former avec agilité, adaptable et force de proposition. Leadership, curiosité.`],
+['Assistant(e) RH – Débutant(e)', `Jeune diplômé(e) en licence RH Bachelor obtenu en juin 2025, je cherche à intégrer une équipe pour apprendre les bases de l’administration du personnel, du recrutement et de la paie.
+Compétences clés : Classement / archivage ; Préparation des dossiers du personnel ; Accueil des nouveaux collaborateurs ; Soutien aux campagnes de recrutement ; Suivi des absences.
+Motivé-e et volonté d’évolution professionnelle à court terme sur un poste de chargé-e RH.`],
+['Consultant(e) RH en cabinet', `Consultant(e) RH depuis 3 ans, j’interviens en cabinet pour accompagner des clients dans leur stratégie RH : audits sociaux, plans de formation, recrutement.
+Compétences clés : Conseil RH ; Conduite d’entretien ; Élaboration de fiches de poste ; Reporting RH ; Connaissance du secteur TPE/PME.
+Après 2 années en entreprise, volonté d’intervenir en externe sur les sujets RH des organisations. Besoin d’un environnement mouvant et évolutif pour déployer ses compétences. Le changement permanent est source de motivation et de performance.`],
+['Responsable Formation – Senior', `Plus de 12 ans d’expérience dans la gestion et la stratégie de formation. Spécialiste du CPF, plan de développement des compétences et relations avec les OPCO.
+Bachelor généraliste obtenu en 2011.
+Formations légales et veille sur la formation et la GEPP / annuelles en interne. Experte en programme de formation et ingénierie pédagogique.
+Compétences clés : Ingénierie de formation ; Montage de dossiers de financement ; Pilotage de budget ; Animation de formations internes ; Évaluation des actions de formation.
+Passionné-e et spécialiste de la formation.`],
+['Chargé(e) de Missions RH – Polyvalent(e)', `RH généraliste avec 4 ans d’expérience, j’interviens sur des missions transverses : paie, recrutement, relations sociales, formation. Capacité à m’adapter à différents environnements.
+Licence en droit du travail obtenue en 2019.
+Compétences clés : Suivi administratif ; Gestion des IRP ; Campagnes de recrutement ; Déploiement des entretiens annuels ; Logiciels : ADP, TalentSoft.
+Esprit d’équipe, force de proposition et disponibilité. Aime le challenge et les nouveaux apprentissages.`],
+['Talent Acquisition Specialist – Tech', `Spécialiste du recrutement IT avec une forte culture digitale. Je développe des stratégies de sourcing innovantes pour recruter des profils pénuriques.
+Titulaire d’un doctorat en innovation RH (en cours d’obtention).
+Compétences clés : Chasse sur LinkedIn / GitHub ; Marque employeur ; Conduite d’entretiens techniques ; ATS : SmartRecruiters, Lever ; Reporting KPI.
+A la recherche d’une première expérience. Propose une vision théorique et se projette dans un environnement en transformation.`],
+['Responsable Relations Sociales', `Expert(e) des relations sociales depuis 8 ans, je pilote les négociations avec les partenaires sociaux, gère les instances représentatives et veille à la conformité légale.
+Licence en droit du travail obtenue en 2011.
+Compétences clés : Dialogue social ; Préparation et animation des CSE ; Négociation d’accords collectifs ; Droit du travail ; Gestion de conflits.
+Sens de la confidentialité / Gestion du stress / Résolution de problèmes.`],
+['Chargé(e) de Mobilité Internationale', `Spécialisé(e) en mobilité internationale, je gère les expatriations, détachements et aspects juridiques liés aux déplacements internationaux.
+Titulaire d’une licence en langues étrangères anglais italien allemand depuis 2001.
+8 ans d’accompagnement à la mobilité au sein de grand groupe international.
+Compétences clés : Gestion des visas et permis de travail ; Fiscalité internationale ; Gestion des packages d’expatriation ; Relations avec les prestataires ; Conformité légale.
+Participation à la mise en œuvre de la stratégie de recrutements à l’international.`],
+['Chargé(e) Diversité & Inclusion', `Passionné(e) par les enjeux d’inclusion, j’ai mis en place plusieurs politiques RSE favorisant l’égalité des chances, la parité et l’intégration des personnes en situation de handicap.
+Titulaire d’un bachelor responsable QSE depuis juin 2025.
+Compétences clés : Élaboration de chartes diversité ; Suivi des indicateurs RSE ; Sensibilisation / formation ; Partenariats associatifs ; Communication interne.
+Aisance relationnelle, proactivité, mise en avant des sujets de diversité pour une priorisation au sein de l’entreprise.`],
+['Responsable Administration du Personnel', `Manager d’équipe paie & administration RH avec 8 ans d’expérience. Je supervise la conformité des processus RH de l’entrée à la sortie du salarié.
+Formation gestion de la paie en 1998.
+Compétences clés : Supervision des contrats / avenants ; Audits internes RH ; Management d’équipe ; Processus disciplinaire ; Logiciels : SAP HR, ADP.
+Capacité à prendre le leadership pour diriger et faire grandir les équipes. Management directif par objectifs ayant fait ses preuves.`],
+['HR Business Partner – Groupe international', `HRBP bilingue (FR/EN) avec 6 ans d’expérience dans un groupe industriel international. J’accompagne les managers sur la stratégie RH locale et globale.
+Titulaire d’un RNCP 7 RRH depuis 2015.
+Compétences clés : Gestion de projets RH ; Accompagnement au changement ; Suivi des performances ; Organisation du travail ; Communication RH.
+Sens de l’adaptation, capacité à s’adapter à la dimension multiculturelle, à la recherche d’un prochain défi professionnel.`],
+['Responsable SIRH', `Expert(e) SIRH depuis 10 ans, j’ai conduit la digitalisation complète du processus RH dans une entreprise de 1000 collaborateurs. Maîtrise de l’intégration d’outils comme Workday et SuccessFactors.
+BTS informatique obtenu en 1998 / master RH en 2013.
+Compétences clés : Gestion de projets SIRH ; Cahiers des charges & recette ; Formation des utilisateurs ; Automatisation des process RH ; Veille technologique.
+Vision globale, sens de l’analyse et du service, rigueur et autonomie.`],
+['Chargé(e) de QVCT', `Professionnel(le) RH avec une spécialisation en QVCT. Mise en place d’actions concrètes pour améliorer le bien-être des salariés et réduire les risques psychosociaux.
+DU qualité de vie et conditions de travail 2019 / Certification en gestion émotionnelle 2023.
+Compétences clés : Enquêtes de satisfaction ; Animation d’ateliers bien-être ; Mise en place de télétravail ; Évaluation des RPS ; Politique de prévention.
+Ecoute, disponibilité, résolution de conflits, pratique de la médiation.`]
+].map(([titre, texte], i) => ({ id: 'ex' + (i + 1), titre, texte, recu: '2026-11-16', decision: 'a_traiter', exemple: true }));
+
+</script>
+<script>
+{
+const CLE = 'chiffon-tri-cv-v1';
+const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
+const LIB = { conseille: 'Entretien conseillé', approfondir: 'À approfondir', non: 'Non prioritaire' };
+const DEC = { a_traiter: 'À traiter', convoque: 'Convoqué(e) en entretien', attente: 'En attente', refuse: 'Refusé(e)', retenu: 'Retenu(e)' };
+let state = { cvs: [], postes: [] }, posteSel = null, ouvert = null;
+
+function charger() {
+  let d = null; try { d = JSON.parse(localStorage.getItem(CLE)); } catch (e) {}
+  state = d && d.cvs ? d : { cvs: CV_EXEMPLES.map(c => ({ ...c })), postes: JSON.parse(JSON.stringify(POSTES_DEFAUT)) };
+  if (!state.postes || !state.postes.length) state.postes = JSON.parse(JSON.stringify(POSTES_DEFAUT));
+  const r = purger(state.cvs); state.cvs = r.gardes;
+  if (r.supprimes) info(`${r.supprimes} CV supprimé${r.supprimes > 1 ? 's' : ''} automatiquement (conservé${r.supprimes > 1 ? 's' : ''} depuis plus d’un an).`);
+  posteSel = state.postes[0].id; sauver();
+}
+function sauver() { try { localStorage.setItem(CLE, JSON.stringify(state)); } catch (e) {} }
+function info(t, warn) { $('#msg').innerHTML = `<div class="notice${warn ? ' warn' : ''}">${esc(t)}</div>`; setTimeout(() => { $('#msg').innerHTML = ''; }, 7000); }
+const fdate = d => new Date(d).toLocaleDateString('fr-FR');
+const poste = id => state.postes.find(p => p.id === id);
+
+/* ---------- Classement ---------- */
+function rendreMatrice() {
+  const P = state.postes;
+  const rows = state.cvs.map(cv => {
+    const res = P.map(p => analyser(cv, p));
+    const best = Math.max(...res.map(r => r.elimine ? -1 : r.score));
+    return { cv, res, best };
+  }).sort((a, b) => b.best - a.best);
+  $('#matrix').innerHTML = `<thead><tr><th>Candidature</th>${P.map(p => `<th>${esc(p.titre)}</th>`).join('')}</tr></thead><tbody>` +
+    rows.map(r => `<tr><td class="n">${esc(r.cv.titre)}</td>${r.res.map((x, i) => `<td><button class="cell s-${x.statut}${x.elimine ? ' el' : ''}" data-p="${P[i].id}" data-c="${r.cv.id}" title="${esc(LIB[x.statut])}${x.elimine ? ' — éliminé' : ''}">${x.score} %</button></td>`).join('')}</tr>`).join('') + '</tbody>';
+}
+function rendreListe() {
+  const p = poste(posteSel); if (!p) return;
+  $('#selPoste').innerHTML = state.postes.map(x => `<option value="${x.id}"${x.id === posteSel ? ' selected' : ''}>${esc(x.titre)}</option>`).join('');
+  $('#pourquoi').textContent = p.pourquoi ? 'Pourquoi ce poste chez CHIFFON : ' + p.pourquoi : '';
+  const f = $('#selFiltre').value, q = norm($('#q').value.trim());
+  const res = state.cvs.map(cv => ({ cv, r: analyser(cv, p) }))
+    .sort((a, b) => (a.r.elimine - b.r.elimine) || b.r.score - a.r.score)
+    .filter(x => (!f || x.r.statut === f) && (!q || norm(x.cv.titre + ' ' + x.cv.texte).includes(q)));
+  if (!res.length) { $('#liste').innerHTML = '<div class="card muted">Aucune candidature ne correspond à ce filtre.</div>'; return; }
+  $('#liste').innerHTML = res.map(({ cv, r }, i) => fiche(cv, r, i + 1)).join('');
+}
+function surligner(cv, r) {
+  const raw = cv.titre + '\n' + cv.texte;
+  const iv = r.surl.slice().sort((a, b) => a[0] - b[0]); let out = '', pos = 0;
+  for (const [a, b] of iv) { if (a < pos) continue; out += esc(raw.slice(pos, a)) + '<mark>' + esc(raw.slice(a, b)) + '</mark>'; pos = b; }
+  return out + esc(raw.slice(pos));
+}
+function fiche(cv, r, rang) {
+  const col = { conseille: 'var(--ok)', approfondir: 'var(--mid)', non: 'var(--no)' }[r.statut];
+  const ic = { ok: '✓', ko: '✗', averifier: '?' };
+  const exp = expiration(cv), jours = Math.ceil((exp - new Date()) / 864e5);
+  return `<details class="card cand" data-id="${cv.id}"${ouvert === cv.id ? ' open' : ''}>
+  <summary><span class="rank">${rang}</span>
+    <span><h3>${esc(cv.titre)}${r.elimine ? '<span class="elimtag">Critère éliminatoire</span>' : ''}</h3>
+      <span class="small muted">${r.trouves.slice(0, 4).map(k => esc(k.k)).join(' · ') || 'Aucun mot-clé du poste'} — décision RH : ${DEC[cv.decision || 'a_traiter']}</span>
+      <div class="bar"><i style="width:${r.score}%;background:${col}"></i></div></span>
+    <span class="tag s-${r.statut}"><b>${r.score} %</b><span>${LIB[r.statut]}</span></span>
+  </summary>
+  <div class="body"><div class="grid2">
+    <div><h4>Critères éliminatoires</h4><ul class="crit">${r.elim.map(e => `<li><span class="ic ${e.statut}">${ic[e.statut]}</span><span>${esc(e.label)}<br><span class="small muted">${esc(e.detail)}</span></span></li>`).join('')}</ul>
+      <p class="calc">Calcul : mots-clés ${r.detail.kw}/60 + expérience ${r.detail.exp}/25 + diplôme ${r.detail.dip}/15${r.detail.malus ? ` − vigilance ${r.detail.malus}` : ''} = ${r.score} %</p></div>
+    <div><h4>Mots-clés reconnus (${r.trouves.length}/${r.trouves.length + r.manquants.length})</h4>
+      ${r.trouves.map(k => `<span class="chip on">${esc(k.k)} ×${k.w}</span>`).join('')}${r.manquants.map(k => `<span class="chip off" title="Absent du CV">${esc(k.k)}</span>`).join('')}
+      ${r.vig.length ? `<h4>Points de vigilance</h4>${r.vig.map(v => `<div class="vig">${esc(v.msg)}</div>`).join('')}` : ''}</div>
+  </div>
+  <h4>Questions d’entretien suggérées</h4><ol class="q">${r.questions.map(q => `<li>${esc(q)}</li>`).join('')}</ol>
+  <div class="row" style="margin-top:10px"><button class="b ghost" type="button" data-copy="${cv.id}">Copier les questions</button></div>
+  <h4>CV (mots-clés surlignés)</h4><div class="cvtext">${surligner(cv, r)}</div>
+  <div class="row" style="margin-top:16px;justify-content:space-between">
+    <label class="row small" style="flex:1 1 260px">Décision RH <select data-dec="${cv.id}" style="width:auto;flex:1">${Object.entries(DEC).map(([k, v]) => `<option value="${k}"${(cv.decision || 'a_traiter') === k ? ' selected' : ''}>${v}</option>`).join('')}</select></label>
+    <span class="small muted">Reçu le ${fdate(cv.recu)} · supprimé le ${exp.toLocaleDateString('fr-FR')} (dans ${jours} j)</span>
+    <button class="b danger" type="button" data-del="${cv.id}">Supprimer ce CV</button>
+  </div></div></details>`;
+}
+function tout() { rendreMatrice(); rendreListe(); rendreCons(); }
+
+$('#matrix').addEventListener('click', e => {
+  const b = e.target.closest('.cell'); if (!b) return;
+  posteSel = b.dataset.p; ouvert = b.dataset.c; $('#selFiltre').value = ''; $('#q').value = ''; rendreListe();
+  const el = document.querySelector(`.cand[data-id="${ouvert}"]`); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+});
+$('#selPoste').addEventListener('change', e => { posteSel = e.target.value; ouvert = null; rendreListe(); });
+$('#selFiltre').addEventListener('change', rendreListe);
+$('#q').addEventListener('input', rendreListe);
+$('#liste').addEventListener('toggle', e => { if (e.target.open) ouvert = e.target.dataset.id; }, true);
+$('#liste').addEventListener('change', e => {
+  const s = e.target.closest('[data-dec]'); if (!s) return;
+  const cv = state.cvs.find(c => c.id === s.dataset.dec); cv.decision = s.value; sauver(); rendreListe();
+});
+$('#liste').addEventListener('click', e => {
+  const d = e.target.closest('[data-del]'), c = e.target.closest('[data-copy]');
+  if (d) {
+    if (d.dataset.ok) { state.cvs = state.cvs.filter(x => x.id !== d.dataset.del); sauver(); tout(); info('CV supprimé.'); }
+    else { d.dataset.ok = 1; d.textContent = 'Confirmer la suppression'; setTimeout(() => { if (d.isConnected) { delete d.dataset.ok; d.textContent = 'Supprimer ce CV'; } }, 4000); }
+  }
+  if (c) {
+    const cv = state.cvs.find(x => x.id === c.dataset.copy), r = analyser(cv, poste(posteSel));
+    const t = `${cv.titre} — ${poste(posteSel).titre}\n` + r.questions.map((q, i) => `${i + 1}. ${q}`).join('\n');
+    navigator.clipboard.writeText(t).then(() => { c.textContent = 'Copié ✓'; }, () => { c.textContent = 'Copie impossible'; });
+  }
+});
+
+/* ---------- Ajout ---------- */
+$('#cvDate').value = new Date().toISOString().slice(0, 10);
+function charge(src) { return new Promise((ok, ko) => { const s = document.createElement('script'); s.src = src; s.onload = ok; s.onerror = ko; document.head.appendChild(s); }); }
+async function lireFichier(f) {
+  const n = f.name.toLowerCase();
+  if (n.endsWith('.txt')) return await f.text();
+  if (n.endsWith('.docx')) {
+    if (!window.mammoth) await charge('https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js');
+    return (await mammoth.extractRawText({ arrayBuffer: await f.arrayBuffer() })).value;
+  }
+  if (n.endsWith('.pdf')) {
+    if (!window.pdfjsLib) { await charge('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js'); pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js'; }
+    const pdf = await pdfjsLib.getDocument({ data: await f.arrayBuffer() }).promise; let t = '';
+    for (let i = 1; i <= pdf.numPages; i++) { const c = await (await pdf.getPage(i)).getTextContent(); t += c.items.map(x => x.str + (x.hasEOL ? '\n' : ' ')).join('') + '\n'; }
+    return t;
+  }
+  throw new Error('format');
+}
+$('#cvFile').addEventListener('change', async e => {
+  const fs = [...e.target.files]; if (!fs.length) return;
+  $('#fileInfo').textContent = 'Lecture…';
+  try {
+    if (fs.length === 1) { $('#cvTexte').value = await lireFichier(fs[0]); if (!$('#cvTitre').value) $('#cvTitre').value = fs[0].name.replace(/\.\w+$/, ''); $('#fileInfo').textContent = fs[0].name + ' lu ✓'; }
+    else {
+      if (!$('#cvInfo').checked) { $('#fileInfo').textContent = 'Cochez d’abord la case d’information des candidats.'; return; }
+      for (const f of fs) ajouter(f.name.replace(/\.\w+$/, ''), await lireFichier(f), $('#cvDate').value);
+      $('#fileInfo').textContent = fs.length + ' CV ajoutés ✓'; tout();
+    }
+  } catch (err) { $('#fileInfo').textContent = 'Lecture impossible : collez le texte du CV à la place.'; }
+  e.target.value = '';
+});
+function ajouter(titre, texte, recu) { state.cvs.push({ id: 'cv' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), titre, texte: masquer(texte.trim()), recu, decision: 'a_traiter' }); sauver(); }
+$('#formCV').addEventListener('submit', e => {
+  e.preventDefault();
+  ajouter($('#cvTitre').value.trim(), $('#cvTexte').value, $('#cvDate').value);
+  const id = state.cvs[state.cvs.length - 1].id;
+  $('#cvTitre').value = ''; $('#cvTexte').value = ''; $('#fileInfo').textContent = '';
+  const best = state.postes.map(p => ({ p, r: analyser(state.cvs.at(-1), p) })).sort((a, b) => (a.r.elimine - b.r.elimine) || b.r.score - a.r.score)[0];
+  posteSel = best.p.id; ouvert = id; tout(); montrer('classement');
+  info(`CV ajouté. Meilleure correspondance : ${best.p.titre} (${best.r.score} %, ${LIB[best.r.statut]}).`);
+  setTimeout(() => { const el = document.querySelector(`.cand[data-id="${id}"]`); if (el) el.scrollIntoView({ behavior: 'smooth' }); }, 50);
+});
+
+/* ---------- Postes ---------- */
+function rendrePostes() {
+  $('#postesForms').innerHTML = state.postes.map(p => `<details class="card posteform" data-p="${p.id}"><summary>${esc(p.titre)}</summary>
+  <div class="grid2"><div><label class="f">Intitulé</label><input data-k="titre" value="${esc(p.titre)}">
+  <label class="f">Pourquoi ce poste chez CHIFFON</label><textarea data-k="pourquoi" style="min-height:80px">${esc(p.pourquoi || '')}</textarea>
+  <div class="grid2" style="gap:10px"><div><label class="f">Expérience min. (éliminatoire)</label><input type="number" min="0" data-k="expMin" value="${p.expMin}"></div>
+  <div><label class="f">Expérience idéale (ans)</label><input type="number" min="1" data-k="expCible" value="${p.expCible}"></div>
+  <div><label class="f">Diplôme min. (niveau 5 = bac+2)</label><select data-k="niveauMin">${[4, 5, 6, 7].map(n => `<option${n == p.niveauMin ? ' selected' : ''}>${n}</option>`).join('')}</select></div></div>
+  <label class="f">Compétence indispensable (éliminatoire) — libellé</label><input data-k="oblLabel" value="${esc(p.obligatoire.label)}">
+  <label class="f">…mots qui la prouvent (au moins un)</label><input data-k="oblTermes" value="${esc(p.obligatoire.termes.join(', '))}"></div>
+  <div><label class="f">Mots-clés (Libellé | poids | synonymes)</label><textarea data-k="motsCles" style="min-height:230px">${esc(p.motsCles.map(k => `${k.k} | ${k.w} | ${k.s.join(', ')}`).join('\n'))}</textarea>
+  <label class="f">Questions d’entretien de base (une par ligne)</label><textarea data-k="questions" style="min-height:110px">${esc(p.questions.join('\n'))}</textarea></div></div>
+  <div class="row" style="margin-top:14px"><button class="b" type="button" data-save="${p.id}">Enregistrer</button><button class="b danger" type="button" data-rm="${p.id}">Supprimer ce poste</button></div></details>`).join('');
+}
+$('#postesForms').addEventListener('click', e => {
+  const s = e.target.closest('[data-save]'), rm = e.target.closest('[data-rm]');
+  if (s) {
+    const f = s.closest('[data-p]'), v = k => f.querySelector(`[data-k="${k}"]`).value, p = poste(s.dataset.save);
+    p.titre = v('titre').trim() || p.titre; p.pourquoi = v('pourquoi').trim();
+    p.expMin = +v('expMin') || 0; p.expCible = Math.max(1, +v('expCible') || 1); p.niveauMin = +v('niveauMin');
+    p.obligatoire = { label: v('oblLabel').trim(), termes: v('oblTermes').split(',').map(t => t.trim()).filter(Boolean) };
+    p.motsCles = v('motsCles').split('\n').map(l => l.split('|').map(x => x.trim())).filter(a => a[0])
+      .map(([k, w, s]) => ({ k, w: Math.min(3, Math.max(1, +w || 1)), s: (s || k).split(',').map(t => t.trim()).filter(Boolean) }));
+    p.questions = v('questions').split('\n').map(t => t.trim()).filter(Boolean);
+    sauver(); tout(); rendrePostes(); info('Fiche « ' + p.titre + ' » enregistrée. Les scores sont recalculés.');
+  }
+  if (rm) {
+    if (state.postes.length < 2) return info('Gardez au moins un poste.', 1);
+    if (!rm.dataset.ok) { rm.dataset.ok = 1; rm.textContent = 'Confirmer'; return; }
+    state.postes = state.postes.filter(p => p.id !== rm.dataset.rm); posteSel = state.postes[0].id; sauver(); tout(); rendrePostes();
+  }
+});
+$('#addPoste').addEventListener('click', () => {
+  const id = 'p' + Date.now().toString(36);
+  state.postes.push({ id, titre: 'Nouveau poste', pourquoi: '', expMin: 1, expCible: 3, niveauMin: 5, obligatoire: { label: 'Compétence indispensable', termes: [] }, motsCles: [], questions: [] });
+  sauver(); rendrePostes(); tout(); document.querySelector(`[data-p="${id}"]`).open = true;
+});
+$('#resetPostes').addEventListener('click', e => {
+  const b = e.currentTarget; if (!b.dataset.ok) { b.dataset.ok = 1; b.textContent = 'Confirmer la réinitialisation'; return; }
+  delete b.dataset.ok; b.textContent = 'Revenir aux fiches d’origine';
+  state.postes = JSON.parse(JSON.stringify(POSTES_DEFAUT)); posteSel = state.postes[0].id; sauver(); rendrePostes(); tout();
+});
+
+/* ---------- Conservation & sauvegarde chiffrée ---------- */
+function rendreCons() {
+  const n = state.cvs.length;
+  const proch = n ? state.cvs.map(expiration).sort((a, b) => a - b)[0] : null;
+  $('#consStat').innerHTML = `<b>${n} CV</b> enregistré${n > 1 ? 's' : ''}. ${proch ? 'Prochaine suppression automatique : <b>' + proch.toLocaleDateString('fr-FR') + '</b>.' : ''}`;
+}
+const b64 = u => btoa(String.fromCharCode(...new Uint8Array(u))), unb64 = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
+async function cle(pwd, sel) {
+  const k = await crypto.subtle.importKey('raw', new TextEncoder().encode(pwd), 'PBKDF2', false, ['deriveKey']);
+  return crypto.subtle.deriveKey({ name: 'PBKDF2', salt: sel, iterations: 250000, hash: 'SHA-256' }, k, { name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt']);
+}
+async function exporter() {
+  const pwd = $('#pwd').value; if (pwd.length < 8) { info('Choisissez un mot de passe d’au moins 8 caractères.', 1); return null; }
+  const sel = crypto.getRandomValues(new Uint8Array(16)), iv = crypto.getRandomValues(new Uint8Array(12));
+  const data = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, await cle(pwd, sel), new TextEncoder().encode(JSON.stringify(state)));
+  return JSON.stringify({ format: 'chiffon-tri-cv', chiffre: true, date: new Date().toISOString(), sel: b64(sel), iv: b64(iv), data: b64(data) });
+}
+$('#exp').addEventListener('click', async () => {
+  const t = await exporter(); if (!t) return;
+  const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([t], { type: 'application/json' }));
+  a.download = 'sauvegarde-cv-chiffon-' + new Date().toISOString().slice(0, 10) + '.json'; a.click();
+  info('Sauvegarde chiffrée créée. Si le téléchargement ne démarre pas ici, utilisez « Copier la sauvegarde ».');
+});
+$('#expCopy').addEventListener('click', async e => {
+  const b = e.currentTarget, t = await exporter(); if (!t) return;
+  navigator.clipboard.writeText(t).then(() => { b.textContent = 'Copiée ✓'; }, () => info('Copie refusée par le navigateur.', 1));
+});
+async function importer(txt) {
+  try {
+    const o = JSON.parse(txt); let d = o;
+    if (o.chiffre) {
+      const buf = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: unb64(o.iv) }, await cle($('#pwd').value, unb64(o.sel)), unb64(o.data));
+      d = JSON.parse(new TextDecoder().decode(buf));
+    }
+    const ids = new Set(state.cvs.map(c => c.id)); let n = 0;
+    for (const c of d.cvs || []) if (!ids.has(c.id)) { state.cvs.push(c); n++; }
+    if (d.postes && d.postes.length) state.postes = d.postes;
+    const r = purger(state.cvs); state.cvs = r.gardes; sauver(); tout(); rendrePostes();
+    info(`${n} CV importé${n > 1 ? 's' : ''}${r.supprimes ? `, ${r.supprimes} supprimé(s) car âgé(s) de plus d’un an` : ''}.`);
+  } catch (e) { info('Import impossible : mot de passe incorrect ou fichier invalide.', 1); }
+}
+$('#impFile').addEventListener('change', async e => { const f = e.target.files[0]; if (f) await importer(await f.text()); e.target.value = ''; });
+$('#impBtn').addEventListener('click', () => importer($('#impText').value));
+$('#wipe').addEventListener('click', e => {
+  const b = e.currentTarget; if (!b.dataset.ok) { b.dataset.ok = 1; b.textContent = 'Confirmer : tout supprimer'; return; }
+  delete b.dataset.ok; b.textContent = 'Supprimer tous les CV'; state.cvs = []; sauver(); tout(); info('Tous les CV ont été supprimés.');
+});
+
+/* ---------- Onglets ---------- */
+function montrer(v) {
+  $$('#tabs button').forEach(b => b.setAttribute('aria-selected', b.dataset.v === v));
+  $$('.view').forEach(s => s.classList.toggle('on', s.id === 'v-' + v));
+}
+$('#tabs').addEventListener('click', e => { const b = e.target.closest('button'); if (b) montrer(b.dataset.v); });
+
+charger(); rendrePostes(); tout();
+}
+</script>
+</body>
+</html>
